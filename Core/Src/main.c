@@ -31,6 +31,7 @@
 #include "stm32746g_sdram.h"
 #include "stm32746g_LCD.h"
 #include "GT811.h"
+#include "debug_console.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -127,6 +128,7 @@ int main(void)
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
 	BSP_LCD_DrawHLine(0, 30, 1024);	
 
+	DebugInit();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -142,6 +144,7 @@ int main(void)
 			if(TS_State.touchDetected != 0)
 			{
 				TouchPoit = TS_BKState.touchDetected;
+				printf("ok %d \r\n", TouchPoit);
 				for(i = 0;i < 5;i++)
 				{
 					if(TouchPoit & 0x01)
@@ -180,7 +183,7 @@ int main(void)
 		}
 		HAL_GPIO_TogglePin(LED4_Out_GPIO_Port, LED4_Out_Pin);
 		HAL_Delay(50);
-
+	  	DebugTask();
   }
   /* USER CODE END 3 */
 }
@@ -257,8 +260,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if(GPIO_Pin == GPIO_PIN_7)
 	{
 		TS_flag = 1;
-		printf("ok\r\n");
-		HAL_GPIO_TogglePin(LED3_Out_GPIO_Port, LED3_Out_Pin);
 	}
 }
 /* USER CODE END 4 */
