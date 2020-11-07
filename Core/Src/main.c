@@ -21,6 +21,7 @@
 #include "main.h"
 #include "dma.h"
 #include "dma2d.h"
+#include "i2c.h"
 #include "ltdc.h"
 #include "usb_device.h"
 #include "gpio.h"
@@ -111,10 +112,11 @@ int main(void)
   MX_FMC_Init();
   MX_LTDC_Init();
   MX_USB_DEVICE_Init();
+  MX_I2C4_Init();
   /* USER CODE BEGIN 2 */
 	/* Program the SDRAM external device */
 	HAL_GPIO_WritePin(LCD_BL_GPIO_Port,LCD_BL_Pin,GPIO_PIN_RESET);
-  BSP_SDRAM_Init();   
+  BSP_SDRAM_Init();
 	BSP_LCD_Init();
 	GT811_Init();
 	
@@ -236,13 +238,15 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC|RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC|RCC_PERIPHCLK_I2C4
+                              |RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
   PeriphClkInitStruct.PLLSAI.PLLSAIR = 3;
   PeriphClkInitStruct.PLLSAI.PLLSAIQ = 2;
   PeriphClkInitStruct.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4;
   PeriphClkInitStruct.PLLSAIDivQ = 1;
   PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_2;
+  PeriphClkInitStruct.I2c4ClockSelection = RCC_I2C4CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {

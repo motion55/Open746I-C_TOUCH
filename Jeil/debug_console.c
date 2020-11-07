@@ -23,6 +23,7 @@
 #include "Timer.h"
 #include "usbd_cdc_if.h"
 //#include "stm32746g_qspi.h"
+#include "GT811.h"
 
 #ifndef EOF
 #define EOF (-1)            /* End of file indicator */
@@ -166,6 +167,7 @@ void debug_parse(char *cmd_line)
 		break;
 	case 'A':  // assemble
 		//SDRAM_Test();
+		DebugPrint("\r\n GT811_ReadID() = %4X",GT811_ReadID());
 		break;
 	case 'B':
 		//W25Q_QUADSPI_Test();

@@ -1,5 +1,8 @@
 #include "TS_I2C.h"
+#include "i2c.h"
+#include "debug_console.h"
 
+#ifndef __i2c_H
 /**
   * @brief  I2C delay.
   * @param  None
@@ -11,6 +14,7 @@ static void delay_us(uint32_t value)
 	i = value * 250;
 	while(i--);
 }
+#endif
 
 /**
   * @brief  I2C Init.
@@ -19,6 +23,7 @@ static void delay_us(uint32_t value)
   */
 void I2C_Init(void)
 {
+#ifndef __i2c_H
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
 	SDA_CLK()
@@ -35,9 +40,12 @@ void I2C_Init(void)
 	GPIO_InitStruct.Pin = SCL_GPIO_PIN;
 	HAL_GPIO_Init(SCL_GPIO_PORT, &GPIO_InitStruct);
 	HAL_GPIO_WritePin(SCL_GPIO_PORT,SCL_GPIO_PIN,GPIO_PIN_SET);
-	
+#else
+	MX_I2C4_Init();
+#endif
 }
 
+#ifndef __i2c_H
 /**
   * @brief  Set SDA In.
   * @param  None
@@ -267,6 +275,7 @@ uint8_t I2C_Send(uint8_t I2c_Addr,uint8_t *buf,uint8_t len)
   I2C_Stop();					
 	return ret; 
 }
+#endif
 
 /*******************************************************************************
 * Function Name  : I2C_WR_Reg
@@ -282,6 +291,7 @@ uint8_t I2C_Send(uint8_t I2c_Addr,uint8_t *buf,uint8_t len)
 *******************************************************************************/
 uint8_t I2C_WriteReg(uint8_t I2c_Addr,uint16_t reg,uint8_t *buf,uint8_t len)
 {
+#ifndef __i2c_H
 	uint8_t i;
 	uint8_t ret=0;
 	I2C_Start();	
@@ -304,7 +314,28 @@ uint8_t I2C_WriteReg(uint8_t I2c_Addr,uint16_t reg,uint8_t *buf,uint8_t len)
 		if(ret)break;  
 	}
   I2C_Stop();					
-	return ret; 
+	return ret;
+#else
+	  uint8_t reg_buffer[258];
+	  reg_buffer[0] = reg>>8;		//Data Addr high
+	  reg_buffer[1] = reg&0xFF;   	//Data Addr low
+
+	  for (int i = 0; i<len; len++) {
+		  reg_buffer[i+2] = buf[i];
+	  }
+
+	  HAL_StatusTypeDef result = 0;
+
+	  result = HAL_I2C_Master_Transmit(&hi2c4, I2c_Addr, reg_buffer, len+2, 100);
+	  if (result!=HAL_OK)
+	  {
+	#ifdef _JEIL_DEBUG_H_
+		  DebugPrint("\r\b HAL_I2C_Master_Transmit failed");
+	#endif
+		  return result;
+	  }
+	  return result;
+#endif
 }
                                                    
 /*******************************************************************************
@@ -319,6 +350,7 @@ uint8_t I2C_WriteReg(uint8_t I2c_Addr,uint16_t reg,uint8_t *buf,uint8_t len)
 *******************************************************************************/		  
 void I2C_ReadReg(uint8_t I2c_Addr,uint16_t reg,uint8_t *buf,uint8_t len)
 {
+#ifndef __i2c_H
 	uint8_t i;
  	I2C_Start();	
  	I2C_Send_Byte(I2c_Addr);  
@@ -341,7 +373,32 @@ void I2C_ReadReg(uint8_t I2c_Addr,uint16_t reg,uint8_t *buf,uint8_t len)
 	{	   
     buf[i]=I2C_Read_Byte(i==(len-1)?0:1); 
 	} 
-  I2C_Stop();   
+  I2C_Stop();
+#else
+  uint8_t reg_buffer[2];
+  reg_buffer[0] = reg>>8;		//Data Addr high
+  reg_buffer[1] = reg&0xFF;   	//Data Addr low
+
+  HAL_StatusTypeDef result;
+
+  result = HAL_I2C_Master_Transmit(&hi2c4, I2c_Addr, reg_buffer, 2, 100);
+  if (result!=HAL_OK)
+  {
+#ifdef _JEIL_DEBUG_H_
+	  DebugPrint("\r\b HAL_I2C_Master_Transmit failed");
+#endif
+	  return;
+  }
+
+  result = HAL_I2C_Master_Receive(&hi2c4, I2c_Addr, buf, len, 100);
+  if (result!=HAL_OK)
+  {
+#ifdef _JEIL_DEBUG_H_
+	  DebugPrint("\r\b HAL_I2C_Master_Receive failed");
+#endif
+	  return;
+  }
+#endif
 }
 
 
